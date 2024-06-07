@@ -1,4 +1,4 @@
-package com.cdurgun.fraud;
+package com.cdurgun.clients.fraud;
 
 public record FraudCheckResponse(Boolean isFrauster) {
 }
