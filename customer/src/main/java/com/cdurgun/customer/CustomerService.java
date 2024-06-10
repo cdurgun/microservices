@@ -1,8 +1,8 @@
 package com.cdurgun.customer;
 
+import com.cdurgun.amqp.RabbitMQMessageProducer;
 import com.cdurgun.clients.fraud.FraudCheckResponse;
 import com.cdurgun.clients.fraud.FraudClient;
-import com.cdurgun.clients.notification.NotificationClient;
 import com.cdurgun.clients.notification.NotificationRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final RestTemplate restTemplate;
     private final FraudClient fraudClient;
-    private final NotificationClient notificationClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
 
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
@@ -38,9 +38,18 @@ public class CustomerService {
         }
 
         //send notification
-        notificationClient.sendNotification(new NotificationRequest(
-                customer.getId(), customer.getEmail(), "Customer registered"
-        ));
+        NotificationRequest notificationRequest = new NotificationRequest(
+                customer.getId(),
+                customer.getEmail(),
+                String.format("Hi, %s, welcome to Amigoscode...", customer.getFirstName())
+        );
+
+        //notificationClient.sendNotification(notificationRequest);
+        rabbitMQMessageProducer.publish(
+                notificationRequest,
+                "internal.exchange",
+                "internal.notification.routing-key"
+                );
 
     }
 }
